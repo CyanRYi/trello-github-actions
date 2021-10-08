@@ -46,7 +46,7 @@ function call(env, path, method, body = {}) {
     },
   });
 
-  console.log("Request: " + body);
+  console.log("Request: " + JSON.stringify(body));
 
   return instance.request({
     url: path,
@@ -61,12 +61,13 @@ async function createCard(env) {
 
   const labelIds = await getLabelIds(env, issue.labels);
   const memberIds = await getMemberIds(env, issue.assignees);
+  console.log("assignees: " + memberIds.join());
 
   call(env, "/cards", "POST", {
     'idList': env.todoListId,
     'keepFromSource': 'all',
     'name': `[#${issue.number}] ${issue.title}`,
-    'desc': issue.description,
+    'desc': issue.body,
     'urlSource': issue.html_url,
     'idMembers': memberIds.join(),
     'idLabels': labelIds.join(),
@@ -80,6 +81,7 @@ async function editCard(env) {
 
   const labelIds = await getLabelIds(env, issue.labels);
   const memberIds = await getMemberIds(env, issue.assignees);
+  console.log("assignees: " + memberIds.join());
 
   const existsCard = await getCards(env)
   .then(data => data.filter(card => card.name.startsWith(`[#${issue.number}]`)));
@@ -90,7 +92,7 @@ async function editCard(env) {
 
   call(env, `/cards/${existsCard[0].id}`, "PUT", {
     'name': `[#${number}] ${issue.title}`,
-    'desc': issue.description,
+    'desc': issue.body,
     'urlSource': issue.html_url,
     'idMembers': memberIds.join(),
     'idLabels': labelIds.join(),
@@ -104,10 +106,6 @@ async function closeCard(env) {
   .then(data => data.filter(card => card.name.startsWith(`[#${issue.number}]`)));
 
   if (existsCard.length === 0) {
-    throw new Error("Card cannot Found");
-  }
-
-  if (!cardId) {
     throw new Error("Card cannot Found");
   }
 
@@ -132,9 +130,11 @@ function getMemberIds(env, assignees) {
   .then(data => {
     return assignees
     .map(assignee => env.memberMap[assignee.login.toLowerCase()])
-    .map(assignee => data.find(each => each.username.toLowerCase() === assignee))
-    .filter(member => Boolean(member))
-    .map(member => member.id);
+    .map(assignee => {
+      const target = data.find(each => each.username.toLowerCase() === assignee);
+      return target ? target.id : undefined;
+    })
+    .filter(member => Boolean(member));
   });
 }
 
