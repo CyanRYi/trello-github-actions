@@ -37,7 +37,6 @@ try {
 function call(env, path, method, body = {}) {
   const instance = axios.create({
     baseURL: 'https://api.trello.com/1',
-    timeout: 1000,
     params: {
       key: env.apiKey,
       token: env.apiToken
@@ -81,10 +80,9 @@ async function editCard(env) {
   const memberIds = await getMemberIds(env, issue.assignees);
 
   const cardId = await getCards(env)
-  .then(function (response) {
-    return response.find(card => card.name.startsWith(`[#${number}]`))
-    .map(card => card.id);
-  });
+  .then(data => data.find(card => card.name.startsWith(`[#${issue.number}]`))
+  .filter(result => Boolean(result))
+  .map(card => card.id));
 
   if (!cardId) {
     throw new Error("Card cannot Found");
@@ -103,10 +101,9 @@ async function closeCard(env) {
   const issue = github.context.payload.issue
 
   const cardId = await getCards(env)
-  .then(function (response) {
-    return response.find(card => card.name.startsWith(`[#${issue.number}]`))
-    .map(card => card.id);
-  });
+  .then(data => data.find(card => card.name.startsWith(`[#${issue.number}]`))
+  .filter(result => Boolean(result))
+  .map(card => card.id));
 
   if (!cardId) {
     throw new Error("Card cannot Found");
@@ -123,6 +120,7 @@ function getLabelIds(env, labels) {
     return labels
     .map(label => label.name)
     .map(labelName => data.find(each => each.name === labelName))
+    .filter(trelloLabel => Boolean(trelloLabel))
     .map(trelloLabel => trelloLabel.id)
   });
 }

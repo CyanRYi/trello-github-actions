@@ -1,6 +1,6 @@
 {
   "name": "trello-github-actions",
-  "version": "2.2.0",
+  "version": "2.2.5",
   "description": "Integrate Github and Trello Issue",
   "main": "index.js",
   "scripts": {
