@@ -18,6 +18,7 @@ try {
 
   const action = core.getInput('trello-action');
   console.log('Action:', action);
+  console.log(env.memberMap);
   switch (action) {
     case 'create_card_when_issue_opened':
       createCard(env);
@@ -110,7 +111,7 @@ async function closeCard(env) {
   }
 
   call(env, `/cards/${existsCard[0].id}`, "PUT", {
-    destinationListId: env.doneListId
+    idList: env.doneListId
   });
 }
 
@@ -130,52 +131,12 @@ function getMemberIds(env, assignees) {
   .then(data => {
     return assignees
     .map(assignee => env.memberMap[assignee.login.toLowerCase()])
-    .map(assignee => {
-      const target = data.find(each => each.username.toLowerCase() === assignee);
-      return target ? target.id : undefined;
-    })
-    .filter(member => Boolean(member));
+    .map(assignee => data.find(each => each.username.toLowerCase() === assignee))
+    .filter(member => Boolean(member))
+    .map(member => member.id);
   });
 }
 
 function getCards(env) {
   return call(env, `/boards/${env.boardId}/cards`, "GET");
-}
-
-function removeCover(apiKey, apiToken, cardId) {
-  const options = {
-    method: "PUT",
-    url: `https://api.trello.com/1/cards/${cardId}?key=${apiKey}&token=${apiToken}`,
-    form: {
-      "idAttachmentCover": null
-    }
-  }
-  return new Promise(function (resolve, reject) {
-    request(options)
-    .then(function (body) {
-      resolve(JSON.parse(body));
-    })
-    .catch(function (error) {
-      reject(error);
-    })
-  });
-}
-
-function addUrlSourceToCard(apiKey, apiToken, cardId, url) {
-  const options = {
-    method: "POST",
-    url: `https://api.trello.com/1/cards/${cardId}/attachments?key=${apiKey}&token=${apiToken}`,
-    form: {
-      url: url
-    }
-  }
-  return new Promise(function (resolve, reject) {
-    request(options)
-    .then(function (body) {
-      resolve(JSON.parse(body));
-    })
-    .catch(function (error) {
-      reject(error);
-    })
-  });
 }
