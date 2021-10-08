@@ -46,6 +46,8 @@ function call(env, path, method, body = {}) {
     },
   });
 
+  console.log("Request: " + body);
+
   return instance.request({
     url: path,
     method: method,
@@ -79,16 +81,14 @@ async function editCard(env) {
   const labelIds = await getLabelIds(env, issue.labels);
   const memberIds = await getMemberIds(env, issue.assignees);
 
-  const cardId = await getCards(env)
-  .then(data => data.find(card => card.name.startsWith(`[#${issue.number}]`))
-  .filter(result => Boolean(result))
-  .map(card => card.id));
+  const existsCard = await getCards(env)
+  .then(data => data.filter(card => card.name.startsWith(`[#${issue.number}]`)));
 
-  if (!cardId) {
+  if (existsCard.length === 0) {
     throw new Error("Card cannot Found");
   }
 
-  call(env, `/cards/${cardId}`, "PUT", {
+  call(env, `/cards/${existsCard[0].id}`, "PUT", {
     'name': `[#${number}] ${issue.title}`,
     'desc': issue.description,
     'urlSource': issue.html_url,
@@ -100,16 +100,18 @@ async function editCard(env) {
 async function closeCard(env) {
   const issue = github.context.payload.issue
 
-  const cardId = await getCards(env)
-  .then(data => data.find(card => card.name.startsWith(`[#${issue.number}]`))
-  .filter(result => Boolean(result))
-  .map(card => card.id));
+  const existsCard = await getCards(env)
+  .then(data => data.filter(card => card.name.startsWith(`[#${issue.number}]`)));
+
+  if (existsCard.length === 0) {
+    throw new Error("Card cannot Found");
+  }
 
   if (!cardId) {
     throw new Error("Card cannot Found");
   }
 
-  call(env, `/cards/${cardId}`, "PUT", {
+  call(env, `/cards/${existsCard[0].id}`, "PUT", {
     destinationListId: env.doneListId
   });
 }
