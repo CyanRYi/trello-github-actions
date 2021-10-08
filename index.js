@@ -13,7 +13,10 @@ try {
     memberMap: JSON.parse(process.env['TRELLO_MEMBER_MAP'])
     .map(row => row.toLowerCase())
     .map(row => row.split(":"))
-    .reduce((map, data) => map[data[0]] = data[1], {}),
+    .reduce((map, data) => {
+      map[data[0]] = data[1];
+      return map;
+    }, {}),
   };
 
   const action = core.getInput('trello-action');
